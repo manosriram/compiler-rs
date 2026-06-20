@@ -155,11 +155,11 @@ impl Tokenizer {
                     cur = String::from("");
                     continue;
                 }
-                " " => {
+                " " | "\n" | "\r" => {
                     cur = String::from("");
                 }
                 _ => {
-                    if self.peek(self.get_current_idx()) == Some(' ') {
+                    if self.peek(self.get_current_idx()) == Some(' ') || self.peek(self.get_current_idx()) == None || self.peek(self.get_current_idx()) == Some(';') {
                         self.tokens.push(Token {
                             typ: TokenType::IDENT,
                             value: Some(String::from(cur.clone())),
