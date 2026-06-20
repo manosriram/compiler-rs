@@ -71,7 +71,7 @@ impl Tokenizer {
         }
     }
 
-    pub fn lexer(self: &mut Self) {
+    pub fn tokenize(self: &mut Self) {
         let mut cur = String::new();
 
         while self.get_current_idx() < self.source.len() {
@@ -159,7 +159,10 @@ impl Tokenizer {
                     cur = String::from("");
                 }
                 _ => {
-                    if self.peek(self.get_current_idx()) == Some(' ') || self.peek(self.get_current_idx()) == None || self.peek(self.get_current_idx()) == Some(';') {
+                    if self.peek(self.get_current_idx()) == Some(' ')
+                        || self.peek(self.get_current_idx()) == None
+                        || self.peek(self.get_current_idx()) == Some(';')
+                    {
                         self.tokens.push(Token {
                             typ: TokenType::IDENT,
                             value: Some(String::from(cur.clone())),
@@ -177,5 +180,62 @@ impl Tokenizer {
         for z in self.tokens {
             println!("{} {}", z.typ.to_string(), z.value.unwrap());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::tokenizer::{Token, TokenType, Tokenizer};
+
+    #[test]
+    fn test_tokenizer_individual_tokens() {
+        let mut t = Tokenizer::new("test_source.l");
+        t.tokenize();
+
+        let final_tokens: Vec<Token> = vec![
+            Token {
+                typ: TokenType::LET,
+                value: Some(String::from("let")),
+            },
+            Token {
+                typ: TokenType::IDENT,
+                value: Some(String::from("abc")),
+            },
+            Token {
+                typ: TokenType::EQUALS,
+                value: Some(String::from("=")),
+            },
+            Token {
+                typ: TokenType::LITERAL,
+                value: Some(String::from("12")),
+            },
+            Token {
+                typ: TokenType::MINUS,
+                value: Some(String::from("-")),
+            },
+            Token {
+                typ: TokenType::LITERAL,
+                value: Some(String::from("6")),
+            },
+            Token {
+                typ: TokenType::SEMICOLON,
+                value: Some(String::from(";")),
+            },
+        ];
+
+        for (idx, token) in t.tokens.iter().enumerate() {
+            assert_eq!(final_tokens.iter().nth(idx).unwrap().value, token.value);
+            assert_eq!(
+                final_tokens.iter().nth(idx).unwrap().typ.to_string(),
+                token.typ.to_string()
+            );
+        }
+    }
+
+    #[test]
+    fn test_tokenizer_result_token_count() {
+        let mut t = Tokenizer::new("test_source.l");
+        t.tokenize();
+        assert_eq!(t.tokens.len(), 7);
     }
 }
