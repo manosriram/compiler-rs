@@ -24,7 +24,7 @@ impl fmt::Display for TokenType {
             TokenType::MULTIPLY => write!(f, "*"),
             TokenType::DIVIDE => write!(f, "/"),
             TokenType::SEMICOLON => write!(f, ";"),
-            TokenType::LITERAL => write!(f, ""),
+            TokenType::LITERAL => write!(f, "literal"),
         }
     }
 }
@@ -87,7 +87,7 @@ impl Tokenizer {
                     self.tokens.push(Token {
                         typ: TokenType::EQUALS,
                         value: Some(String::from("=")),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
                     cur = String::from("");
                 }
@@ -95,7 +95,7 @@ impl Tokenizer {
                     self.tokens.push(Token {
                         typ: TokenType::PLUS,
                         value: Some(String::from("+")),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
                     cur = String::from("");
                 }
@@ -103,7 +103,7 @@ impl Tokenizer {
                     self.tokens.push(Token {
                         typ: TokenType::MINUS,
                         value: Some(String::from("-")),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
                     cur = String::from("");
                 }
@@ -111,7 +111,7 @@ impl Tokenizer {
                     self.tokens.push(Token {
                         typ: TokenType::MULTIPLY,
                         value: Some(String::from("*")),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
                     cur = String::from("");
                 }
@@ -119,14 +119,15 @@ impl Tokenizer {
                     self.tokens.push(Token {
                         typ: TokenType::DIVIDE,
                         value: Some(String::from("/")),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
-                    cur = String::from(""); }
+                    cur = String::from("");
+                }
                 ";" => {
                     self.tokens.push(Token {
                         typ: TokenType::SEMICOLON,
                         value: Some(String::from(";")),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
                     cur = String::from("");
                 }
@@ -136,7 +137,7 @@ impl Tokenizer {
                             self.tokens.push(Token {
                                 typ: TokenType::LET,
                                 value: Some(String::from("let")),
-                                line: self.cur_line
+                                line: self.cur_line,
                             });
                             cur = String::from("");
                             self.set_current_idx(self.get_current_idx() + 2);
@@ -160,14 +161,14 @@ impl Tokenizer {
                     self.tokens.push(Token {
                         typ: TokenType::LITERAL,
                         value: Some(String::from(cur.clone())),
-                        line: self.cur_line
+                        line: self.cur_line,
                     });
                     cur = String::from("");
                     continue;
                 }
                 "\n" => {
                     self.cur_line += 1;
-                },
+                }
                 " " | "\r" => {
                     cur = String::from("");
                 }
@@ -179,7 +180,7 @@ impl Tokenizer {
                         self.tokens.push(Token {
                             typ: TokenType::IDENT,
                             value: Some(String::from(cur.clone())),
-                            line: self.cur_line
+                            line: self.cur_line,
                         });
                         cur = String::from("");
                     }
@@ -192,7 +193,7 @@ impl Tokenizer {
 
     pub fn show_tokens(self: Self) {
         for z in self.tokens {
-            println!("{} {} -- line {}", z.typ.to_string(), z.value.unwrap(), z.line);
+            println!("{} {}", z.typ.to_string(), z.value.unwrap());
         }
     }
 }
@@ -210,37 +211,37 @@ mod tests {
             Token {
                 typ: TokenType::LET,
                 value: Some(String::from("let")),
-                line: 0
+                line: 0,
             },
             Token {
                 typ: TokenType::IDENT,
                 value: Some(String::from("abc")),
-                line: 0
+                line: 0,
             },
             Token {
                 typ: TokenType::EQUALS,
                 value: Some(String::from("=")),
-                line: 0
+                line: 0,
             },
             Token {
                 typ: TokenType::LITERAL,
                 value: Some(String::from("12")),
-                line: 0
+                line: 0,
             },
             Token {
                 typ: TokenType::MINUS,
                 value: Some(String::from("-")),
-                line: 0
+                line: 0,
             },
             Token {
                 typ: TokenType::LITERAL,
                 value: Some(String::from("6")),
-                line: 0
+                line: 0,
             },
             Token {
                 typ: TokenType::SEMICOLON,
                 value: Some(String::from(";")),
-                line: 0
+                line: 0,
             },
         ];
 
