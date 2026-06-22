@@ -1,6 +1,7 @@
 use core::fmt;
 use std::fs;
 
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     LET,
     IDENT,
@@ -10,6 +11,8 @@ pub enum TokenType {
     MULTIPLY,
     DIVIDE,
     SEMICOLON,
+    LPAREN,
+    RPAREN,
     LITERAL,
 }
 
@@ -24,15 +27,24 @@ impl fmt::Display for TokenType {
             TokenType::MULTIPLY => write!(f, "*"),
             TokenType::DIVIDE => write!(f, "/"),
             TokenType::SEMICOLON => write!(f, ";"),
+            TokenType::LPAREN => write!(f, "("),
+            TokenType::RPAREN => write!(f, ")"),
             TokenType::LITERAL => write!(f, "literal"),
         }
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Token {
     pub typ: TokenType,
     pub value: Option<String>,
     pub line: i32,
+}
+
+impl std::fmt::Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }
 
 pub struct Tokenizer {

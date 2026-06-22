@@ -1,15 +1,19 @@
-use crate::{program::Program, tokenizer::Token};
+use crate::{ast::Ast, program::Program, tokenizer::Token};
 
-pub struct Parser<'a> {
-    tokens: &'a [Token],
+pub struct Parser {
+    tokens: Vec<Token>,
+
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(tokens: &'a [Token]) -> Self {
+impl Parser {
+    pub fn new(tokens: Vec<Token>) -> Self {
         Parser { tokens: tokens }
     }
 
-    pub fn parse(&self) -> Program {
-        Program::new()
+
+    pub fn parse(&self) -> Ast {
+        let mut ast = Ast::new(self.tokens.clone());
+        ast.build();
+        ast
     }
 }
