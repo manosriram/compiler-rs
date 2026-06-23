@@ -14,6 +14,7 @@ pub enum TokenType {
     LPAREN,
     RPAREN,
     LITERAL,
+    EOF,
 }
 
 impl fmt::Display for TokenType {
@@ -30,6 +31,7 @@ impl fmt::Display for TokenType {
             TokenType::LPAREN => write!(f, "("),
             TokenType::RPAREN => write!(f, ")"),
             TokenType::LITERAL => write!(f, "literal"),
+            TokenType::EOF => write!(f, "eof"),
         }
     }
 }
@@ -180,8 +182,10 @@ impl Tokenizer {
                 }
                 "\n" => {
                     self.cur_line += 1;
+                    // self.set_current_idx(self.get_current_idx() + 3);
+                    cur = String::from("");
                 }
-                " " | "\r" => {
+                " " | "\r" | "\t" => {
                     cur = String::from("");
                 }
                 _ => {
@@ -201,6 +205,12 @@ impl Tokenizer {
 
             self.set_current_idx(self.get_current_idx() + 1);
         }
+
+        self.tokens.push(Token {
+            typ: TokenType::EOF,
+            value: Some(String::from("")),
+            line: self.cur_line,
+        });
     }
 
     pub fn show_tokens(self: Self) {
@@ -255,6 +265,46 @@ mod tests {
                 value: Some(String::from(";")),
                 line: 0,
             },
+            Token {
+                typ: TokenType::LET,
+                value: Some(String::from("let")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::IDENT,
+                value: Some(String::from("def")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::EQUALS,
+                value: Some(String::from("=")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::LITERAL,
+                value: Some(String::from("12")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::MINUS,
+                value: Some(String::from("-")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::LITERAL,
+                value: Some(String::from("6")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::SEMICOLON,
+                value: Some(String::from(";")),
+                line: 0,
+            },
+            Token {
+                typ: TokenType::EOF,
+                value: Some(String::from("")),
+                line: 0,
+            },
         ];
 
         for (idx, token) in t.tokens.iter().enumerate() {
@@ -270,6 +320,6 @@ mod tests {
     fn test_tokenizer_result_token_count() {
         let mut t = Tokenizer::new("test_source.l");
         t.tokenize();
-        assert_eq!(t.tokens.len(), 7);
+        assert_eq!(t.tokens.len(), 15);
     }
 }

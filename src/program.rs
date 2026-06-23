@@ -1,7 +1,7 @@
 pub struct Program {}
 
-impl Program{
+impl Program {
     pub fn new() -> Self {
-        Program{}
+        Program {}
     }
 }

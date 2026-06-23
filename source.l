@@ -1,1 +1,2 @@
-let abc = 12 - 10;
+let abc = 12 - 6;
+let def = 12 - 6;
