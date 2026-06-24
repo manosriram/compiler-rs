@@ -182,7 +182,6 @@ impl Tokenizer {
                 }
                 "\n" => {
                     self.cur_line += 1;
-                    // self.set_current_idx(self.get_current_idx() + 3);
                     cur = String::from("");
                 }
                 " " | "\r" | "\t" => {
@@ -223,6 +222,44 @@ impl Tokenizer {
 #[cfg(test)]
 mod tests {
     use crate::tokenizer::{Token, TokenType, Tokenizer};
+
+    fn tokenize(source: &str) -> Tokenizer {
+        let mut t = Tokenizer {
+            source: String::from(source),
+            tokens: Vec::new(),
+            idx: 0,
+            cur_line: 0,
+        };
+        t.tokenize();
+        t
+    }
+
+    fn assert_token_types(tokens: &[Token], expected: &[TokenType]) {
+        assert_eq!(tokens.len(), expected.len());
+        for (token, expected_type) in tokens.iter().zip(expected.iter()) {
+            assert_eq!(
+                std::mem::discriminant(&token.typ),
+                std::mem::discriminant(expected_type)
+            );
+        }
+    }
+
+    fn assert_token_values(tokens: &[Token], expected: &[&str]) {
+        assert_eq!(tokens.len(), expected.len());
+        for (token, expected_value) in tokens.iter().zip(expected.iter()) {
+            assert_eq!(token.value.as_deref(), Some(*expected_value));
+        }
+    }
+
+    fn assert_same_token_types(left: &[Token], right: &[Token]) {
+        assert_eq!(left.len(), right.len());
+        for (l, r) in left.iter().zip(right.iter()) {
+            assert_eq!(
+                std::mem::discriminant(&l.typ),
+                std::mem::discriminant(&r.typ)
+            );
+        }
+    }
 
     #[test]
     fn test_tokenizer_individual_tokens() {
@@ -321,5 +358,146 @@ mod tests {
         let mut t = Tokenizer::new("test_source.l");
         t.tokenize();
         assert_eq!(t.tokens.len(), 15);
+    }
+
+    #[test]
+    fn test_tokenizer_loads_test_source_file() {
+        let t = Tokenizer::new("test_source.l");
+        assert!(t.source.contains("let abc = 12 - 6;"));
+        assert!(t.source.contains("let def = 12 - 6;"));
+    }
+
+    #[test]
+    fn test_tokenize_empty_source_produces_eof_only() {
+        let t = tokenize("");
+        assert_eq!(t.tokens.len(), 1);
+        assert_token_types(&t.tokens, &[TokenType::EOF]);
+        assert_eq!(t.tokens[0].value.as_deref(), Some(""));
+    }
+
+    #[test]
+    fn test_tokenize_ends_with_eof() {
+        let t = tokenize("let x = 1;");
+        let last = t.tokens.last().unwrap();
+        assert_eq!(
+            std::mem::discriminant(&last.typ),
+            std::mem::discriminant(&TokenType::EOF)
+        );
+    }
+
+    #[test]
+    fn test_tokenize_arithmetic_operators() {
+        let t = tokenize("1 + 2 - 3 * 4 / 5 ");
+        assert_token_types(
+            &t.tokens,
+            &[
+                TokenType::LITERAL,
+                TokenType::PLUS,
+                TokenType::LITERAL,
+                TokenType::MINUS,
+                TokenType::LITERAL,
+                TokenType::MULTIPLY,
+                TokenType::LITERAL,
+                TokenType::DIVIDE,
+                TokenType::LITERAL,
+                TokenType::EOF,
+            ],
+        );
+        assert_token_values(
+            &t.tokens,
+            &["1", "+", "2", "-", "3", "*", "4", "/", "5", ""],
+        );
+    }
+
+    #[test]
+    fn test_tokenize_multidigit_literals() {
+        let t = tokenize("100 2500 ");
+        assert_token_types(
+            &t.tokens,
+            &[TokenType::LITERAL, TokenType::LITERAL, TokenType::EOF],
+        );
+        assert_token_values(&t.tokens, &["100", "2500", ""]);
+    }
+
+    #[test]
+    fn test_tokenize_whitespace_is_ignored() {
+        let compact = tokenize("let x = 1;");
+        let spaced = tokenize("  let   x   =   1   ;  ");
+        assert_same_token_types(&compact.tokens, &spaced.tokens);
+        assert_token_values(
+            &compact.tokens,
+            &["let", "x", "=", "1", ";", ""],
+        );
+    }
+
+    #[test]
+    fn test_tokenize_simple_let_statement() {
+        let t = tokenize("let x = 1;");
+        assert_token_types(
+            &t.tokens,
+            &[
+                TokenType::LET,
+                TokenType::IDENT,
+                TokenType::EQUALS,
+                TokenType::LITERAL,
+                TokenType::SEMICOLON,
+                TokenType::EOF,
+            ],
+        );
+        assert_token_values(&t.tokens, &["let", "x", "=", "1", ";", ""]);
+    }
+
+    #[test]
+    fn test_tokenize_let_expression_with_subtraction() {
+        let t = tokenize("let abc = 12 - 6;");
+        assert_token_types(
+            &t.tokens,
+            &[
+                TokenType::LET,
+                TokenType::IDENT,
+                TokenType::EQUALS,
+                TokenType::LITERAL,
+                TokenType::MINUS,
+                TokenType::LITERAL,
+                TokenType::SEMICOLON,
+                TokenType::EOF,
+            ],
+        );
+        assert_token_values(&t.tokens, &["let", "abc", "=", "12", "-", "6", ";", ""]);
+    }
+
+    #[test]
+    fn test_tokenize_tracks_line_numbers() {
+        let t = tokenize("let a = 1;\nlet b = 2;");
+        assert_eq!(t.tokens[0].line, 0);
+        assert_eq!(t.tokens[4].line, 0);
+        assert_eq!(t.tokens[5].line, 1);
+        assert_eq!(t.tokens[t.tokens.len() - 1].line, 1);
+    }
+
+    #[test]
+    fn test_tokenize_multiple_statements_match_test_source_shape() {
+        let t = tokenize("let abc = 12 - 6;\nlet def = 12 - 6;");
+        assert_eq!(t.tokens.len(), 15);
+        assert_token_types(
+            &t.tokens,
+            &[
+                TokenType::LET,
+                TokenType::IDENT,
+                TokenType::EQUALS,
+                TokenType::LITERAL,
+                TokenType::MINUS,
+                TokenType::LITERAL,
+                TokenType::SEMICOLON,
+                TokenType::LET,
+                TokenType::IDENT,
+                TokenType::EQUALS,
+                TokenType::LITERAL,
+                TokenType::MINUS,
+                TokenType::LITERAL,
+                TokenType::SEMICOLON,
+                TokenType::EOF,
+            ],
+        );
     }
 }
