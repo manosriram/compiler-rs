@@ -98,8 +98,21 @@ impl Ast {
                     name: name.value.unwrap(),
                     value: Box::from(val),
                 })
+            },
+            TokenType::IDENT => {
+                let name = self.get_current_token().unwrap();
+                self.advance();
+                self.is(TokenType::EQUALS);
+                let val = self.expr();
+                self.is(TokenType::SEMICOLON);
+                Ok(Statement::Redef { name: name.value.unwrap(), value: Box::from(val) })
+            },
+            _ => {
+                // Ok(Statement::Expr(())
+                // Ok(self.expr())
+                // println!("got {}", self.get_current_token().unwrap().typ);
+                // Err(String::from("nothing wrong"))
             }
-            _ => Err(String::from("nothing wrong")),
         }
     }
 
@@ -175,6 +188,10 @@ impl Ast {
         }
     }
 
+    pub fn analyze(&mut self) {
+
+    }
+
     pub fn build(&mut self) {
         while !matches!(self.get_current_token().unwrap().typ, TokenType::EOF) {
             let stmt = self.parse_stmt();
@@ -184,6 +201,9 @@ impl Ast {
                     Statement::Let { name, value } => {
                         println!("got var {}", name);
                     }
+                    Statement::Redef { name, value } => {
+                        println!("got redef var {}", name);
+                    }
                     _ => {}
                 },
                 Err(e) => {
@@ -191,6 +211,10 @@ impl Ast {
                 }
             };
         }
+    }
+
+    pub fn semantic_analyze(&self) {
+
     }
 }
 

@@ -12,6 +12,7 @@ impl Parser {
     pub fn parse(&self) -> Ast {
         let mut ast = Ast::new(self.tokens.clone());
         ast.build();
+        ast.analyze();
         ast
     }
 }
