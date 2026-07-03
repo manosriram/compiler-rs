@@ -4,6 +4,7 @@ use std::fs;
 #[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     LET,
+    REDEF,
     IDENT,
     EQUALS,
     PLUS,
@@ -21,6 +22,7 @@ impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TokenType::LET => write!(f, "let"),
+            TokenType::REDEF => write!(f, "redef"),
             TokenType::IDENT => write!(f, "ident"),
             TokenType::EQUALS => write!(f, "="),
             TokenType::PLUS => write!(f, "+"),

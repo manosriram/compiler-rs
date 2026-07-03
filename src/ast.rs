@@ -46,7 +46,7 @@ pub enum Statement {
 }
 
 pub struct Ast {
-    statements: Vec<Statement>,
+    pub statements: Vec<Statement>,
     tokens: Vec<Token>,
     current_token_idx: usize,
 }
@@ -77,7 +77,6 @@ impl Ast {
     }
 
     fn is(&mut self, typ: TokenType) -> bool {
-        // println!("ty = {} {}", typ ,self.get_current_token().unwrap().value.unwrap().to_string());
         if matches!(self.get_current_token().unwrap().typ, typ) {
             self.advance();
             return true;
@@ -100,7 +99,7 @@ impl Ast {
                     value: Box::from(val),
                 })
             },
-            TokenType::IDENT => {
+            TokenType::REDEF | TokenType::IDENT => {
                 let name = self.get_current_token().unwrap();
                 self.advance();
                 self.is(TokenType::EQUALS);
@@ -109,10 +108,7 @@ impl Ast {
                 Ok(Statement::Redef { name: name.value.unwrap(), value: Box::from(val) })
             },
             _ => {
-                // Ok(Statement::Expr(())
-                // Ok(self.expr())
-                // println!("got {}", self.get_current_token().unwrap().typ);
-                Err(String::from("nothing wrong"))
+                Err(String::from("Not LET or IDENT"))
             }
         }
     }
@@ -187,11 +183,11 @@ impl Ast {
             },
             TokenType::PLUS => {
                 self.advance();
-                Expr::UnaryOp { op: Op::PLUS, expr: Box::from(self.expr()) }
+                Expr::UnaryOp { op: Op::PLUS, expr: Box::from(self.factor()) }
             },
             TokenType::MINUS => {
                 self.advance();
-                Expr::UnaryOp { op: Op::MINUS, expr: Box::from(self.expr()) }
+                Expr::UnaryOp { op: Op::MINUS, expr: Box::from(self.factor()) }
             },
             _ => panic!("Parse error"),
         }
@@ -215,24 +211,16 @@ impl Ast {
     }
 
     pub fn build(&mut self) {
-        println!("{:?}", self.tokens);
         while !matches!(self.get_current_token(), Some(Token { typ: TokenType::EOF, .. }) | None) {
             let stmt = self.parse_stmt();
             match stmt {
-                Ok(v) => match v {
-                    // TODO: handle other tokens
-                    Statement::Let { name, value } => {
-                        println!("got var {}", name);
-                    }
-                    Statement::Redef { name, value } => {
-                        println!("got redef var {}", name);
-                    }
-                    _ => {}
+                Ok(v) => {
+                    self.statements.push(v);
                 },
                 Err(e) => {
-                    panic!("Error building ast {}", e);
+                    panic!("err = {}", e);
                 }
-            };
+            }
         }
     }
 

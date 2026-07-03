@@ -21,6 +21,22 @@ impl Tiny {
 
     pub fn compile(&mut self) -> Ast {
         self.tokenizer.tokenize();
-        Parser::new(self.tokenizer.tokens.clone()).parse()
+        let ast = Parser::new(self.tokenizer.tokens.clone()).parse();
+
+        for stmt in ast.statements.iter().clone() {
+            match stmt {
+                crate::ast::Statement::Let { name, value } => {
+                    println!("got var {}", name);
+                },
+
+                crate::ast::Statement::Redef { name, value } => {
+                    println!("got redef var {}", name);
+                },
+
+                crate::ast::Statement::Expr(expr) => todo!(),
+                crate::ast::Statement::None {  } => todo!(),
+            };
+        }
+        ast
     }
 }
