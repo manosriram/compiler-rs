@@ -1,4 +1,5 @@
 use core::panic;
+use std::ops::Deref;
 
 use crate::tokenizer::{Token, TokenType};
 
@@ -111,7 +112,7 @@ impl Ast {
                 // Ok(Statement::Expr(())
                 // Ok(self.expr())
                 // println!("got {}", self.get_current_token().unwrap().typ);
-                // Err(String::from("nothing wrong"))
+                Err(String::from("nothing wrong"))
             }
         }
     }
@@ -183,17 +184,39 @@ impl Ast {
                 let e = self.expr();
                 self.advance();
                 e
-            }
+            },
+            TokenType::PLUS => {
+                self.advance();
+                Expr::UnaryOp { op: Op::PLUS, expr: Box::from(self.expr()) }
+            },
+            TokenType::MINUS => {
+                self.advance();
+                Expr::UnaryOp { op: Op::MINUS, expr: Box::from(self.expr()) }
+            },
             _ => panic!("Parse error"),
         }
     }
 
-    pub fn analyze(&mut self) {
+    fn analyze_stmt(&self, stmt: &Statement) {
+        match stmt {
+            Statement::Let { name, value } => {
 
+            },
+            _ => {
+
+            }
+        }
+    }
+
+    pub fn analyze(&mut self) {
+        for stmt in self.statements.iter() {
+            self.analyze_stmt(stmt);
+        }
     }
 
     pub fn build(&mut self) {
-        while !matches!(self.get_current_token().unwrap().typ, TokenType::EOF) {
+        println!("{:?}", self.tokens);
+        while !matches!(self.get_current_token(), Some(Token { typ: TokenType::EOF, .. }) | None) {
             let stmt = self.parse_stmt();
             match stmt {
                 Ok(v) => match v {
