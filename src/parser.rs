@@ -13,6 +13,7 @@ impl Parser {
         let mut ast = Ast::new(self.tokens.clone());
         ast.build();
         ast.analyze();
+        ast.printsymtab();
         ast
     }
 }
@@ -75,9 +76,6 @@ mod tests {
         let _ast = parser.parse();
 
         assert_eq!(parser.tokens.len(), tokens.len());
-        assert!(matches!(
-            parser.tokens.last().unwrap().typ,
-            TokenType::EOF
-        ));
+        assert!(matches!(parser.tokens.last().unwrap().typ, TokenType::EOF));
     }
 }

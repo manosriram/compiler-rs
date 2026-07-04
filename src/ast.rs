@@ -1,15 +1,18 @@
 use core::panic;
-use std::ops::Deref;
 
+use crate::symboltable::SymbolTable;
 use crate::tokenizer::{Token, TokenType};
 
+#[derive(Clone, Debug)]
 pub enum Literal {
     Int(i64),
     Float(f64),
     Bool(bool),
     String(String),
+    Unknown,
 }
 
+#[derive(Clone)]
 pub enum Op {
     PLUS,
     MINUS,
@@ -17,6 +20,7 @@ pub enum Op {
     MULTIPLY,
 }
 
+#[derive(Clone)]
 pub enum Expr {
     BinOp {
         left: Box<Expr>,
@@ -38,6 +42,7 @@ pub enum Expr {
     None {},
 }
 
+#[derive(Clone)]
 pub enum Statement {
     Let { name: String, value: Box<Expr> },
     Redef { name: String, value: Box<Expr> },
@@ -49,6 +54,7 @@ pub struct Ast {
     pub statements: Vec<Statement>,
     tokens: Vec<Token>,
     current_token_idx: usize,
+    symbol_table: SymbolTable,
 }
 
 impl Ast {
@@ -57,6 +63,7 @@ impl Ast {
             statements: vec![],
             tokens: tokens,
             current_token_idx: 0,
+            symbol_table: SymbolTable::new(),
         }
     }
 
@@ -81,7 +88,11 @@ impl Ast {
             self.advance();
             return true;
         }
-        panic!("Expected typ {} found {}", typ, self.get_current_token().unwrap().typ);
+        panic!(
+            "Expected typ {} found {}",
+            typ,
+            self.get_current_token().unwrap().typ
+        );
     }
 
     fn parse_stmt(&mut self) -> Result<Statement, String> {
@@ -98,18 +109,19 @@ impl Ast {
                     name: name.value.unwrap(),
                     value: Box::from(val),
                 })
-            },
-            TokenType::REDEF | TokenType::IDENT => {
+            }
+            TokenType::IDENT => {
                 let name = self.get_current_token().unwrap();
                 self.advance();
                 self.is(TokenType::EQUALS);
                 let val = self.expr();
                 self.is(TokenType::SEMICOLON);
-                Ok(Statement::Redef { name: name.value.unwrap(), value: Box::from(val) })
-            },
-            _ => {
-                Err(String::from("Not LET or IDENT"))
+                Ok(Statement::Redef {
+                    name: name.value.unwrap(),
+                    value: Box::from(val),
+                })
             }
+            _ => Err(String::from("Not LET or IDENT")),
         }
     }
 
@@ -180,43 +192,75 @@ impl Ast {
                 let e = self.expr();
                 self.advance();
                 e
-            },
+            }
             TokenType::PLUS => {
                 self.advance();
-                Expr::UnaryOp { op: Op::PLUS, expr: Box::from(self.factor()) }
-            },
+                Expr::UnaryOp {
+                    op: Op::PLUS,
+                    expr: Box::from(self.factor()),
+                }
+            }
             TokenType::MINUS => {
                 self.advance();
-                Expr::UnaryOp { op: Op::MINUS, expr: Box::from(self.factor()) }
-            },
+                Expr::UnaryOp {
+                    op: Op::MINUS,
+                    expr: Box::from(self.factor()),
+                }
+            }
             _ => panic!("Parse error"),
         }
     }
 
-    fn analyze_stmt(&self, stmt: &Statement) {
-        match stmt {
-            Statement::Let { name, value } => {
+    fn analyze_binop(&self, op: Op, left: Expr, right: Expr) -> Literal {
+        let left = self.analyze_expr(left);
+        let right = self.analyze_expr(right);
+        Literal::Unknown
+    }
 
-            },
-            _ => {
-
-            }
+    fn analyze_expr(&self, expr: Expr) -> Literal {
+        match expr {
+            Expr::BinOp { left, op, right } => self.analyze_binop(op, *left, *right),
+            Expr::Literal(l) => l,
+            _ => Literal::Unknown,
         }
     }
 
+    pub fn printsymtab(&self) {
+        self.symbol_table.print();
+    }
+
+    fn analyze_stmt(&mut self, stmt: &Statement) {
+        self.symbol_table.enter_scope();
+        match stmt {
+            Statement::Let { name, value } => {
+                self.symbol_table
+                    .define(name.clone(), self.analyze_expr(value.as_ref().clone()));
+            }
+            _ => {}
+        }
+        self.symbol_table.exit_scope();
+    }
+
     pub fn analyze(&mut self) {
-        for stmt in self.statements.iter() {
-            self.analyze_stmt(stmt);
+        for i in 0..self.statements.len() {
+            let stmt = self.statements[i].clone();
+            self.analyze_stmt(&stmt);
         }
     }
 
     pub fn build(&mut self) {
-        while !matches!(self.get_current_token(), Some(Token { typ: TokenType::EOF, .. }) | None) {
+        while !matches!(
+            self.get_current_token(),
+            Some(Token {
+                typ: TokenType::EOF,
+                ..
+            }) | None
+        ) {
             let stmt = self.parse_stmt();
             match stmt {
                 Ok(v) => {
                     self.statements.push(v);
-                },
+                }
                 Err(e) => {
                     panic!("err = {}", e);
                 }
@@ -224,9 +268,7 @@ impl Ast {
         }
     }
 
-    pub fn semantic_analyze(&self) {
-
-    }
+    pub fn semantic_analyze(&self) {}
 }
 
 #[cfg(test)]
@@ -292,10 +334,7 @@ mod tests {
     fn parse_all_statements(tokens: Vec<Token>) -> Vec<Statement> {
         let mut ast = Ast::new(tokens);
         let mut statements = Vec::new();
-        while !matches!(
-            ast.get_current_token().unwrap().typ,
-            TokenType::EOF
-        ) {
+        while !matches!(ast.get_current_token().unwrap().typ, TokenType::EOF) {
             statements.push(ast.parse_stmt().unwrap());
         }
         statements
